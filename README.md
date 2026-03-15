@@ -15,6 +15,10 @@ Using Python Dataclasses, we represent a recipe as a complex genotype:
 - Genetic Repair: Automated consolidation of duplicate ingredients and proportional mass scaling to ensure every child is "brewable".
 - Mutation: 
 #### 3. Selection and Fitness
+Fitness Calculation Strategy 1: fitness_distance: Fitness based on squared distance to target OG, IBU, SRM.
+Fitness Calculation Strategy 2: fitness_range_penalty: Range-based penalty fitness function.
+Parent Selection: tournament_selection: Pick k random recipes, return the one with the highest fitness (min square error)
+Survivor Selection: survivor_selection: (μ, λ) strategy: Select the best μ individuals from the offspring only.
 ___
 ### Getting Started
 #### Prerequisites
@@ -41,4 +45,4 @@ ___
 - Rowan Mohammed
 - Brandon Liang
 - George Salib
-- Kevin _____
+- Kevin Panchalingam

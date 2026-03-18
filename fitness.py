@@ -30,7 +30,6 @@ def fitness_range_penalty(recipe: Recipe, target_range):
     srm = recipe.calculate_srm()
 
     og_min, og_max = target_range["og"]
-    print("kevin note",{og_min, og_max})
     ibu_min, ibu_max = target_range["ibu"]
     srm_min, srm_max = target_range["srm"]
 

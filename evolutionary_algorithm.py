@@ -98,8 +98,8 @@ class EvolutionaryAlgorithm:
         
         for _ in range(self.population_size):
             # Parent selection via tournament
-            parent_a = tournament_selection(population, k=3)
-            parent_b = tournament_selection(population, k=3)
+            parent_a = tournament_selection(population, k=2)
+            parent_b = tournament_selection(population, k=2)
             
             # Recombination (alternating strategies for diversity)
             if random.random() < 0.5:

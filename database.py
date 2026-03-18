@@ -17,7 +17,7 @@ class IngredientDatabase:
     hops: list[Dict]
     target_beers: Dict[str, Dict[str, float]]
 
-    def __new__(cls, malts_file: str = "malts.csv", hops_file: str = "hops.csv", targets_file: str = "targets.csv"):
+    def __new__(cls, malts_file: str = "malts.csv", hops_file: str = "hops.csv", targets_file: str = "beer_styles.csv"):
         # The Singleton Pattern:
         # Check if the class has already been instantiated anywhere else in the code.
         # If it hasn't, create it using the superclass constructor, and call _load_data() 
@@ -42,11 +42,21 @@ class IngredientDatabase:
             with open(targets_file, mode='r', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    self.target_beers[row["style"]] = {
-                        "og": float(row["og"]),
-                        "ibu": float(row["ibu"]),
-                        "srm": float(row["srm"])
-                    }
+                    # Check if this is the range format (beer_styles.csv) or point format (targets.csv)
+                    if 'og_min' in row and 'og_max' in row:
+                        # Range format from beer_styles.csv
+                        self.target_beers[row["style"]] = {
+                            "og": (float(row["og_min"]), float(row["og_max"])),
+                            "ibu": (float(row["ibu_min"]), float(row["ibu_max"])),
+                            "srm": (float(row["srm_min"]), float(row["srm_max"]))
+                        }
+                    else:
+                        # Point format from targets.csv
+                        self.target_beers[row["style"]] = {
+                            "og": float(row["og"]),
+                            "ibu": float(row["ibu"]),
+                            "srm": float(row["srm"])
+                        }
         except FileNotFoundError:
              print(f"Warning: {targets_file} not found. Target beers will be unavailable.")
         

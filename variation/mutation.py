@@ -19,6 +19,12 @@ BOIL_TIME_RANGE = (0, 90)
 
 STANDARD_HOP_TIMES = [0, 5, 10, 15, 20, 30, 45, 60, 75, 90]
 
+# 1/5 Rule tracking
+_mutation_history = [] # stores recent success/failure outcomes (last 50 mutations)
+_HISTORY_SIZE = 50
+_SUCCESS_TARGET = 0.2  # 1/5 rule: target 20% success rate
+_ADAPTATION_CONSTANT = 0.85  # c value should range in [0.8, 1]: σ = σ/c if success rate > 1/5, σ = σ×c if success rate < 1/5
+
 
 def range_control(val, min_val, max_val):
     """returns min_val if val is less than min_val
@@ -26,6 +32,50 @@ def range_control(val, min_val, max_val):
        otherwise returns val"""
     
     return max(min_val, min(max_val, val))
+
+
+def record_mutation_success(was_successful: bool):
+    """Record whether the last mutation produced an improvement.
+    
+       call this after evaluating if a mutation improved fitness
+    """
+    _mutation_history.append(was_successful)
+    if len(_mutation_history) > _HISTORY_SIZE:
+        _mutation_history.pop(0)
+
+
+def get_adapted_parameters(base_sigma=DEFAULT_MALT_SIGMA, 
+                          base_add_remove_prob=DEFAULT_ADD_REMOVE_PROB):
+    """Calculate adapted mutation parameters based on recent success rate (1/5 rule).
+    
+    Follows the 1/5 success rule:
+    - σ = σ        if success_rate = 1/5  (no change)
+    - σ = σ / c    if success_rate > 1/5  (decrease: too conservative)
+    - σ = σ × c    if success_rate < 1/5  (increase: too aggressive)
+    where success_rate is the % of successful mutations and c ∈ [0.8, 1]
+    """
+    if len(_mutation_history) < _HISTORY_SIZE:
+        return base_sigma, base_add_remove_prob  # Not enough data yet
+    
+    success_rate = sum(_mutation_history) / _HISTORY_SIZE
+    
+    sigma = base_sigma
+    add_remove_prob = base_add_remove_prob
+    
+    if success_rate > _SUCCESS_TARGET:
+        # Too many successes (p_s > 1/5) → decrease exploration
+        sigma /= _ADAPTATION_CONSTANT
+        add_remove_prob /= _ADAPTATION_CONSTANT
+    elif success_rate < _SUCCESS_TARGET:
+        # Too few successes (p_s < 1/5) → increase exploration
+        sigma *= _ADAPTATION_CONSTANT
+        add_remove_prob *= _ADAPTATION_CONSTANT
+    
+    # Keep within reasonable bounds
+    sigma = range_control(sigma, 0.01, 0.2)
+    add_remove_prob = range_control(add_remove_prob, 0.02, 0.15)
+    
+    return sigma, add_remove_prob
 
 
 def mutate_malt_weights(malts, sigma=DEFAULT_MALT_SIGMA):
@@ -102,29 +152,27 @@ def mutate_recipe(recipe: Recipe,
                   add_remove_prob: float = DEFAULT_ADD_REMOVE_PROB,
                   hop_swap_prob: float = DEFAULT_HOP_SWAP_PROB,
                   boil_time_prob: float = DEFAULT_BOIL_TIME_MUTATION_PROB,
-                  fitness_score: Optional[float] = None,
-                  fitness_threshold: Optional[float] = None,
+                  use_adaptive_1_5_rule: bool = True,
                   target_weight: float = 95.0) -> Recipe:
     """Main mutation operator for recipes.
 
     - Malt weights are perturbed with Gaussian noise, preserving OG/SRM effects in phenotype.
     - Small prob for malt hop add/remove to encourage exploration.
     - Hop variety swap + hop timing mutation for IBU diversity.
-    - Adaptive add/remove based on fitness threshold (reduced when close to optimum).
+    - Adaptive parameters based on 1/5 rule (if use_adaptive_1_5_rule=True).
     """
     child = copy.deepcopy(recipe)
 
-    # adapt exploration probability as fitness improves (lower fitness means better solution)
-    adapt_prob = add_remove_prob
-    if fitness_score is not None and fitness_threshold is not None and fitness_score <= fitness_threshold:
-        adapt_prob *= 0.5 #Halves once we're close to the target fitness
+    # Apply 1/5 rule: adapt parameters based on recent mutation success rate
+    if use_adaptive_1_5_rule:
+        sigma, add_remove_prob = get_adapted_parameters(sigma, add_remove_prob)
 
     mutate_malt_weights(child.malts, sigma=sigma)
     mutate_hop_timing(child.hops, probability=boil_time_prob)
     mutate_hop_varieties(child.hops, ingredient_db, probability=hop_swap_prob)
 
-    mutate_add_remove_malt(child, ingredient_db, prob=adapt_prob)
-    mutate_add_remove_hop(child, ingredient_db, prob=adapt_prob)
+    mutate_add_remove_malt(child, ingredient_db, prob=add_remove_prob)
+    mutate_add_remove_hop(child, ingredient_db, prob=add_remove_prob)
 
     # Keep genotype clean and normalized
     child.malts = consolidate_duplicates(child.malts)

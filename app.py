@@ -28,8 +28,8 @@ if "running" not in st.session_state:
     st.session_state.running = False
 if "history" not in st.session_state:
     st.session_state.history = None
-if "best_recipe" not in st.session_state:
-    st.session_state.best_recipe = None
+if "top_recipes" not in st.session_state:
+    st.session_state.top_recipes = None
 
 # Load database
 db = IngredientDatabase()
@@ -130,7 +130,7 @@ with st.sidebar:
         "Population Size (μ)",
         min_value=10,
         max_value=100,
-        value=30,
+        value=50,
         step=5,
         help="Number of recipes in each generation"
     )
@@ -144,20 +144,52 @@ with st.sidebar:
         help="How many generations to evolve"
     )
     
-    num_malts = st.slider(
-        "Malts per Recipe",
-        min_value=1,
-        max_value=5,
-        value=2,
-        help="Number of different grains in each recipe"
+    tournament_size = st.slider(
+        "Tournament Size (k)",
+        min_value=2,
+        max_value=10,
+        value=4,
+        step=1,
+        help="Number of random competitors in tournament selection"
     )
     
-    num_hops = st.slider(
-        "Hops per Recipe",
+    st.write("---")
+    
+    # Ingredient Configuration
+    st.subheader("Recipe Composition")
+    
+    st.write("**Malts per Recipe (range):**")
+    min_malts, max_malts = st.slider(
+        "Malts",
         min_value=1,
         max_value=5,
-        value=2,
-        help="Number of different hop additions in each recipe"
+        value=(1, 4),
+        step=1,
+        help="Range of malt varieties per recipe"
+    )
+    
+    st.write("**Hops per Recipe (range):**")
+    min_hops, max_hops = st.slider(
+        "Hops",
+        min_value=1,
+        max_value=5,
+        value=(1, 4),
+        step=1,
+        help="Range of hop additions per recipe"
+    )
+    
+    st.write("---")
+    
+    # Results Configuration
+    st.subheader("Results")
+    
+    top_n_results = st.slider(
+        "Show Top N Recipes",
+        min_value=1,
+        max_value=10,
+        value=3,
+        step=1,
+        help="Number of best recipes to display"
     )
     
     st.write("---")
@@ -174,7 +206,7 @@ with st.sidebar:
 
 if clear_button:
     st.session_state.history = None
-    st.session_state.best_recipe = None
+    st.session_state.top_recipes = None
     st.experimental_rerun()
 
 if start_button:
@@ -191,23 +223,27 @@ if start_button:
         population_size=population_size,
         num_generations=num_generations,
         fitness_strategy=fitness_strategy,
-        num_malts=num_malts,
-        num_hops=num_hops,
+        min_malts=min_malts,
+        max_malts=max_malts,
+        min_hops=min_hops,
+        max_hops=max_hops,
+        tournament_size=tournament_size,
+        top_n_results=top_n_results,
         ingredient_db=db
     )
     
     # Progress tracking
-    def progress_callback(generation, best_fitness, avg_fitness, best_recipe):
+    def progress_callback(generation, best_fitness, avg_fitness, best_recipe, diversity):
         progress = generation / num_generations
         progress_placeholder.progress(progress)
-        status_placeholder.info(f"Generation {generation}/{num_generations} | Best Fitness: {best_fitness:.4f} | Avg Fitness: {avg_fitness:.4f}")
+        status_placeholder.info(f"Generation {generation}/{num_generations} | Best: {best_fitness:.4f} | Avg: {avg_fitness:.4f} | Diversity: {diversity:.4f}")
     
     # Run the algorithm
-    best_recipe, history = ea.run(callback=progress_callback)
+    top_recipes, history = ea.run(callback=progress_callback)
     
     # Store results
     st.session_state.history = history
-    st.session_state.best_recipe = best_recipe
+    st.session_state.top_recipes = top_recipes
     st.session_state.running = False
     
     # Clear progress indicators
@@ -220,22 +256,57 @@ if start_button:
 
 # ===== RESULTS DISPLAY =====
 
-if st.session_state.history and st.session_state.best_recipe:
+if st.session_state.history and st.session_state.top_recipes:
     st.write("---")
     st.header("📊 Results")
     
     history = st.session_state.history
-    best_recipe = st.session_state.best_recipe
+    top_recipes = st.session_state.top_recipes
+    best_recipe = top_recipes[0]
+    
+    # Display convergence info
+    st.subheader("🎯 Evolution Summary")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if history['converged']:
+            st.metric("Status", "✅ Converged", f"Gen {history['generations_to_convergence']}")
+        else:
+            st.metric("Status", "⏹️ Stopped", f"Gen {history['generations']}")
+    with col2:
+        avg_diversity = sum(history['diversity']) / len(history['diversity']) if history['diversity'] else 0
+        st.metric(
+            "Avg Recipe Diversity", 
+            f"{avg_diversity:.4f}",
+            help="Average distance between recipes in OG/IBU/SRM space (higher = more diverse)"
+        )
+    with col3:
+        st.metric("Final Fitness", f"{best_recipe.fitness_score:.4f}", help="Lower is better")
+    
+    # Add explanation about recipe similarity
+    if len(top_recipes) > 1:
+        fitness_scores = [r.fitness_score for r in top_recipes]
+        max_diff = max(fitness_scores) - min(fitness_scores)
+        
+        if max_diff < 0.001:
+            st.info(
+                "ℹ️ **Top recipes have very similar fitness scores** (diff < 0.001). "
+                "This is expected when the algorithm converges—multiple recipes can achieve nearly the same quality. "
+                "They may differ in specific ingredients but produce equivalent beer profiles."
+            )
+    
+    st.write("---")
     
     # Create visualizations
-    st.subheader("📈 Fitness Evolution")
+    st.subheader("📈 Fitness & Diversity Evolution")
     
     best_fitness_list = list(history['best_fitness'])
     avg_fitness_list = list(history['avg_fitness'])
+    diversity_list = list(history['diversity']) if 'diversity' in history else []
     generations = list(range(len(best_fitness_list)))
     
-    # Create line chart with scatter points
-    fig_fitness = go.Figure()
+    # Create line chart with scatter points and secondary y-axis for diversity
+    from plotly.subplots import make_subplots
+    fig_fitness = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Add best fitness trace
     fig_fitness.add_trace(go.Scatter(
@@ -246,7 +317,7 @@ if st.session_state.history and st.session_state.best_recipe:
         line=dict(color='#1f77b4', width=2),
         marker=dict(size=5),
         hovertemplate='Generation: %{x}<br>Best Fitness: %{y:.4f}<extra></extra>'
-    ))
+    ), secondary_y=False)
     
     # Add average fitness trace
     fig_fitness.add_trace(go.Scatter(
@@ -256,11 +327,25 @@ if st.session_state.history and st.session_state.best_recipe:
         name='Average Fitness',
         line=dict(color='#ff7f0e', width=2, dash='dash'),
         hovertemplate='Generation: %{x}<br>Avg Fitness: %{y:.4f}<extra></extra>'
-    ))
+    ), secondary_y=False)
+    
+    # Add diversity trace on secondary axis
+    if diversity_list:
+        fig_fitness.add_trace(go.Scatter(
+            x=generations,
+            y=diversity_list,
+            mode='lines',
+            name='Recipe Diversity',
+            line=dict(color='#2ca02c', width=2),
+            hovertemplate='Generation: %{x}<br>Recipe Diversity: %{y:.4f}<extra></extra>'
+        ), secondary_y=True)
+    
+    fig_fitness.update_xaxes(title_text="Generation")
+    fig_fitness.update_yaxes(title_text="Fitness (lower is better)", secondary_y=False)
+    if diversity_list:
+        fig_fitness.update_yaxes(title_text="Recipe Diversity (OG/IBU/SRM distance)", secondary_y=True)
     
     fig_fitness.update_layout(
-        xaxis_title="Generation",
-        yaxis_title="Fitness (lower is better)",
         height=400,
         hovermode='x unified',
         showlegend=True
@@ -376,128 +461,141 @@ if st.session_state.history and st.session_state.best_recipe:
     
     st.write("---")
     
-    # Best Recipe Metrics - Simple display
-    st.subheader("🍻 Best Recipe Metrics")
+    # Top Recipes Display
+    st.subheader(f"🍻 Top {len(top_recipes)} Recipe(s)")
     
-    og = best_recipe.calculate_original_gravity()
-    ibu = best_recipe.calculate_ibu()
-    srm = best_recipe.calculate_srm()
+    # Create tabs for each top recipe
+    recipe_counts = history.get('recipe_counts', {})
+    tab_labels = []
+    for i, recipe in enumerate(top_recipes):
+        count = recipe_counts.get(id(recipe), 1)
+        count_str = f" ({count} candidate{'s' if count != 1 else ''})" if count > 1 else ""
+        tab_labels.append(f"Recipe #{i+1}{count_str}")
     
-    # Display as metrics in a clean row
-    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    recipe_tabs = st.tabs(tab_labels)
     
-    # Format target display
-    if isinstance(target_beer['og'], tuple):
-        og_target = f"Target: {target_beer['og'][0]:.3f}-{target_beer['og'][1]:.3f}"
-        ibu_target = f"Target: {target_beer['ibu'][0]:.0f}-{target_beer['ibu'][1]:.0f}"
-        srm_target = f"Target: {target_beer['srm'][0]:.1f}-{target_beer['srm'][1]:.1f}"
-    else:
-        og_target = f"Target: {target_beer['og']:.3f}"
-        ibu_target = f"Target: {target_beer['ibu']:.1f}"
-        srm_target = f"Target: {target_beer['srm']:.1f}"
-    
-    with metric_col1:
-        st.metric(
-            "Original Gravity",
-            f"{og:.3f}",
-            og_target
-        )
-    
-    with metric_col2:
-        st.metric(
-            "IBU",
-            f"{ibu:.1f}",
-            ibu_target
-        )
-    
-    with metric_col3:
-        st.metric(
-            "Color (SRM)",
-            f"{srm:.1f}",
-            srm_target
-        )
-    
-    with metric_col4:
-        st.metric(
-            "Fitness Score",
-            f"{best_recipe.fitness_score:.4f}",
-            "Lower is better"
-        )
-    
-    st.write("---")
-    
-    # Malt Bill
-    st.subheader("Malt Bill")
-    malt_data = []
-    for malt in best_recipe.malts:
-        malt_data.append({
-            "Grain": malt.name,
-            "Mass (lbs)": f"{malt.mass_lbs:.2f}",
-            "Yield (PPG)": malt.yield_ppg,
-            "Color (SRM)": malt.color_srm
-        })
-    
-    if malt_data:
-        df_malts = pd.DataFrame(malt_data)
-        st.dataframe(df_malts)
-    
-    # Hop Schedule
-    st.subheader("Hop Schedule")
-    hop_data = []
-    for hop in best_recipe.hops:
-        hop_data.append({
-            "Hop": hop.name,
-            "Amount (oz)": f"{hop.mass_oz:.2f}",
-            "Boil Time (min)": hop.time_added_mins,
-            "Alpha Acid %": hop.alpha_acid_percent
-        })
-    
-    if hop_data:
-        df_hops = pd.DataFrame(hop_data)
-        st.dataframe(df_hops)
-    
-    # Download recipe
-    st.write("---")
-    
-    # Format target values for display
-    if isinstance(target_beer['og'], tuple):
-        target_og_str = f"{target_beer['og'][0]:.3f} - {target_beer['og'][1]:.3f}"
-        target_ibu_str = f"{target_beer['ibu'][0]:.0f} - {target_beer['ibu'][1]:.0f}"
-        target_srm_str = f"{target_beer['srm'][0]:.1f} - {target_beer['srm'][1]:.1f}"
-    else:
-        target_og_str = f"{target_beer['og']:.3f}"
-        target_ibu_str = f"{target_beer['ibu']:.1f}"
-        target_srm_str = f"{target_beer['srm']:.1f}"
-    
-    recipe_text = f"""
-# {selected_style} Recipe
+    for tab_idx, tab in enumerate(recipe_tabs):
+        with tab:
+            recipe = top_recipes[tab_idx]
+            count = recipe_counts.get(id(recipe), 1)
+            og = recipe.calculate_original_gravity()
+            ibu = recipe.calculate_ibu()
+            srm = recipe.calculate_srm()
+            
+            # Display candidate count if multiple match this recipe
+            if count > 1:
+                st.info(f"📊 **{count} candidates in the final population match this recipe** (within tolerance)")
+            
+            # Display as metrics in a clean row
+            metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+            
+            # Format target display
+            if isinstance(target_beer['og'], tuple):
+                og_target = f"{target_beer['og'][0]:.3f}-{target_beer['og'][1]:.3f}"
+                ibu_target = f"{target_beer['ibu'][0]:.0f}-{target_beer['ibu'][1]:.0f}"
+                srm_target = f"{target_beer['srm'][0]:.1f}-{target_beer['srm'][1]:.1f}"
+            else:
+                og_target = f"Target: {target_beer['og']:.3f}"
+                ibu_target = f"Target: {target_beer['ibu']:.1f}"
+                srm_target = f"Target: {target_beer['srm']:.1f}"
+            
+            with metric_col1:
+                st.metric(
+                    "Original Gravity",
+                    f"{og:.3f}",
+                    og_target
+                )
+            
+            with metric_col2:
+                st.metric(
+                    "IBU",
+                    f"{ibu:.1f}",
+                    ibu_target
+                )
+            
+            with metric_col3:
+                st.metric(
+                    "Color (SRM)",
+                    f"{srm:.1f}",
+                    srm_target
+                )
+            
+            with metric_col4:
+                st.metric(
+                    "Fitness Score",
+                    f"{recipe.fitness_score:.4f}",
+                    "Lower is better"
+                )
+            
+            # Malt Bill
+            st.subheader("Malt Bill")
+            malt_data = []
+            for malt in recipe.malts:
+                malt_data.append({
+                    "Grain": malt.name,
+                    "Mass (lbs)": f"{malt.mass_lbs:.2f}",
+                    "Yield (PPG)": malt.yield_ppg,
+                    "Color (SRM)": malt.color_srm
+                })
+            
+            if malt_data:
+                df_malts = pd.DataFrame(malt_data)
+                st.dataframe(df_malts)
+            
+            # Hop Schedule
+            st.subheader("Hop Schedule")
+            hop_data = []
+            for hop in recipe.hops:
+                hop_data.append({
+                    "Hop": hop.name,
+                    "Amount (oz)": f"{hop.mass_oz:.2f}",
+                    "Boil Time (min)": hop.time_added_mins,
+                    "Alpha Acid %": hop.alpha_acid_percent
+                })
+            
+            if hop_data:
+                df_hops = pd.DataFrame(hop_data)
+                st.dataframe(df_hops)
+            
+            # Download button for this recipe
+            if isinstance(target_beer['og'], tuple):
+                target_og_str = f"{target_beer['og'][0]:.3f} - {target_beer['og'][1]:.3f}"
+                target_ibu_str = f"{target_beer['ibu'][0]:.0f} - {target_beer['ibu'][1]:.0f}"
+                target_srm_str = f"{target_beer['srm'][0]:.1f} - {target_beer['srm'][1]:.1f}"
+            else:
+                target_og_str = f"{target_beer['og']:.3f}"
+                target_ibu_str = f"{target_beer['ibu']:.1f}"
+                target_srm_str = f"{target_beer['srm']:.1f}"
+            
+            recipe_text = f"""
+# {selected_style} Recipe #{tab_idx+1}
 
 ## Target Style
 - OG: {target_og_str}
 - IBU: {target_ibu_str}
 - SRM: {target_srm_str}
 
-## Best Recipe Generated
+## Generated Recipe
 - OG: {og:.3f}
 - IBU: {ibu:.1f}
 - SRM: {srm:.1f}
-- Fitness Score: {best_recipe.fitness_score:.4f}
+- Fitness: {recipe.fitness_score:.4f}
 
 ## Malt Bill
 """
-    for malt in best_recipe.malts:
-        recipe_text += f"\n- {malt.name}: {malt.mass_lbs:.2f} lbs (PPG: {malt.yield_ppg}, Color: {malt.color_srm})"
-    
-    recipe_text += "\n\n## Hop Schedule\n"
-    for hop in best_recipe.hops:
-        recipe_text += f"\n- {hop.name}: {hop.mass_oz:.2f} oz ({hop.alpha_acid_percent}% AA) @ {hop.time_added_mins} min"
-    
-    st.download_button(
-        label="📄 Download Recipe as Text",
-        data=recipe_text,
-        file_name=f"{selected_style.replace(' ', '_')}_recipe.txt",
-        mime="text/plain"
-    )
+            for malt in recipe.malts:
+                recipe_text += f"- {malt.name}: {malt.mass_lbs:.2f} lbs\n"
+            
+            recipe_text += "\n## Hop Schedule\n"
+            for hop in recipe.hops:
+                recipe_text += f"- {hop.name}: {hop.mass_oz:.2f} oz @ {hop.time_added_mins} min\n"
+            
+            st.download_button(
+                label=f"📥 Download Recipe #{tab_idx+1}",
+                data=recipe_text,
+                file_name=f"{selected_style.replace(' ', '_')}_recipe_{tab_idx+1}.md",
+                mime="text/markdown"
+            )
 
 else:
     st.info("👈 Configure parameters in the sidebar and click 'Start Evolution' to begin optimizing recipes!")

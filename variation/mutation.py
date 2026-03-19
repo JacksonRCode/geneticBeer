@@ -2,9 +2,9 @@
 import copy
 from typing import Optional
 
-from ..database import IngredientDatabase
-from ..dataStrucs import Recipe, Malt, Hop
-from .recombination import consolidate_duplicates, normalize_malt_weight
+from database import IngredientDatabase
+from dataStrucs import Recipe, Malt, Hop
+from variation.recombination import consolidate_duplicates, normalize_malt_weight
 
 #Mutation parameters
 DEFAULT_MALT_SIGMA = 0.05  # 5% variation around current grain weights

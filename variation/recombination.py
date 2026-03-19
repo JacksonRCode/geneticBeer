@@ -1,7 +1,7 @@
 # variation/recombination.py
 import random
 import copy
-from ..dataStrucs import Recipe, Malt
+from dataStrucs import Recipe, Malt
 
 def consolidate_duplicates(ingredients):
     """

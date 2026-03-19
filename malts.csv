@@ -1,8 +1,58 @@
 name,yield_ppg,color_srm
-Pale Malt (2 Row),36.0,2.0
-Caramel/Crystal Malt - 60L,34.0,60.0
-Roasted Barley,25.0,300.0
-Munich Malt,37.0,9.0
-Vienna Malt,36.0,4.0
-Chocolate Malt,28.0,350.0
-Flaked Oats,33.0,1.0
+2-Row (US),37,1.8
+2-Row (UK),36,3.0
+6-Row (US),35,2.0
+Pilsner (Ger),38,1.6
+Pilsner (Bel),37,1.8
+Maris Otter,38,3.5
+Golden Promise,37,2.5
+Pale Ale,38,3.5
+Vienna,35,4.0
+Munich Light,35,10.0
+Munich Dark,34,20.0
+Mild Malt,37,4.0
+Carafoam,37,2.0
+Carapils,33,1.5
+Carahell,34,11.0
+Carared,35,20.0
+Caramunich I,34,34.0
+Caramunich II,34,45.0
+Caramunich III,33,56.0
+Caravienne,34,22.0
+Crystal 10,35,10.0
+Crystal 20,35,20.0
+Crystal 30,34,30.0
+Crystal 40,34,40.0
+Crystal 60,34,60.0
+Crystal 80,33,80.0
+Crystal 120,33,120.0
+Crystal 150,33,150.0
+Special B,31,180.0
+Biscuit,35,23.0
+Victory,34,28.0
+Amber,32,27.0
+Brown,32,65.0
+Chocolate (US),28,350.0
+Chocolate (UK),34,450.0
+Pale Chocolate,28,200.0
+Roasted Barley,25,300.0
+Black Patent,25,500.0
+Black Barley,27,530.0
+Blackprinz,36,500.0
+Midnight Wheat,33,550.0
+Carafa I,32,340.0
+Carafa II,32,425.0
+Carafa III,32,535.0
+Wheat Malted,37,2.3
+Wheat Flaked,36,2.0
+Rye Malted,29,3.0
+Rye Flaked,36,2.0
+Oats Flaked,33,1.0
+Oats Malted,37,1.0
+Corn Flaked,39,0.5
+Rice Flaked,38,1.0
+Honey Malt,37,25.0
+Acidulated,27,3.0
+Smoked,37,5.0
+Peat Smoked,34,3.0
+Aromatic,35,20.0

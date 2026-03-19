@@ -41,6 +41,15 @@ class Recipe:
     fitness_score: float
 
     def __init__(self, malts: List[Malt], hops: List[Hop], volume_gal: float = 5.0):
+        #KP ADDED ************ MALTS CONTRIBUTING TO VERY HIGH SRM....scaling down
+        # Optional: cap total malt mass to 20 lbs
+        total_mass = sum(m.mass_lbs for m in malts)
+        if total_mass > 20.0:
+            scale = 20.0 / total_mass
+            for m in malts:
+                m.mass_lbs *= scale  # scale down proportionally
+        #KP ADD ABOVED ***********
+
         self.malts = malts
         self.hops = hops
         self.volume_gal = volume_gal

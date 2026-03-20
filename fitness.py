@@ -1,6 +1,10 @@
 # fitness.py
 from dataStrucs import Recipe
 
+OG_STD  = 0.0172
+IBU_STD = 16.00
+SRM_STD = 9.67
+
 def fitness_distance(recipe: Recipe, target):
     """
     Normalized
@@ -11,14 +15,9 @@ def fitness_distance(recipe: Recipe, target):
     ibu = recipe.calculate_ibu()
     srm = recipe.calculate_srm()
 
-    #normalize values
-    og_range = 0.1 #difference between minimum of all og values in beer_styles.csv and max of all og values
-    ibu_range = 100 #same as above, for ibu
-    srm_range = 38.5
-
-    og_diff = (target["og"] - og)/og_range
-    ibu_diff = (target["ibu"] - ibu)/ibu_range
-    srm_diff = (target["srm"] - srm)/srm_range
+    og_diff = (target["og"] - og)/OG_STD
+    ibu_diff = (target["ibu"] - ibu)/IBU_STD
+    srm_diff = (target["srm"] - srm)/SRM_STD
 
     fitness = ((og_diff ** 2) + (ibu_diff ** 2) + (srm_diff ** 2))**0.5
 
@@ -56,32 +55,23 @@ def fitness_range_penalty(recipe: Recipe, target_range):
     ibu = recipe.calculate_ibu()
     srm = recipe.calculate_srm()
 
-    og_min, og_max = target_range["og"]
-    ibu_min, ibu_max = target_range["ibu"]
-    srm_min, srm_max = target_range["srm"]
-
-    #normalize values
-    og_range = og_max - og_min
-    ibu_range = ibu_max - ibu_min
-    srm_range = srm_max - srm_min
-
     og_penalty = 0
     if og < og_min:
-        og_penalty = ((og_min - og)/og_range) ** 2
+        og_penalty = ((og_min - og)/OG_STD) ** 2
     elif og > og_max:
-        og_penalty = ((og - og_max)/og_range) ** 2
+        og_penalty = ((og - og_max)/OG_STD) ** 2
 
     ibu_penalty = 0
     if ibu < ibu_min:
-        ibu_penalty = ((ibu_min - ibu)/ibu_range) ** 2
+        ibu_penalty = ((ibu_min - ibu)/IBU_STD) ** 2
     elif ibu > ibu_max:
-        ibu_penalty = ((ibu - ibu_max)/ibu_range) ** 2
+        ibu_penalty = ((ibu - ibu_max)/IBU_STD) ** 2
 
     srm_penalty = 0
     if srm < srm_min:
-        srm_penalty = ((srm_min - srm)/srm_range) ** 2
+        srm_penalty = ((srm_min - srm)/SRM_STD) ** 2
     elif srm > srm_max:
-        srm_penalty = ((srm - srm_max)/srm_range) ** 2
+        srm_penalty = ((srm - srm_max)/SRM_STD) ** 2
 
     fitness = og_penalty + ibu_penalty + srm_penalty
 

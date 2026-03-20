@@ -69,57 +69,104 @@ with st.sidebar:
     
     st.write("---")
     
-    # Custom ranges option
-    st.subheader("Advanced Options")
-    use_custom_ranges = st.checkbox(
-        "Customize ranges",
-        value=False,
-        help="Adjust the acceptable ranges for this beer style"
+    # Fitness Function Selection
+    st.subheader("Fitness Function")
+    
+    fitness_strategy = st.selectbox(
+        "Select Fitness Function",
+        options=["distance", "range_penalty"],
+        format_func=lambda x: {
+            "distance": "Distance (Point Target) - Minimize distance to exact values",
+            "range_penalty": "Range Penalty - Penalty for being outside acceptable ranges"
+        }[x],
+        help="Choose how to evaluate recipe quality"
     )
     
-    if use_custom_ranges and is_range_format:
-        st.write("**Acceptable Ranges:**")
-        
-        og_min, og_max = st.slider(
-            "OG Range",
-            min_value=1.0,
-            max_value=1.15,
-            value=target_beer['og'],
-            step=0.005,
-            format="%.3f"
+    # Warn if fitness strategy doesn't match data format
+    if fitness_strategy == "range_penalty" and not is_range_format:
+        st.warning(
+            "⚠️ Selected 'Range Penalty' but target has point values. "
+            "Converting to ranges ±5% around the target values."
         )
-        
-        ibu_min, ibu_max = st.slider(
-            "IBU Range",
-            min_value=0.0,
-            max_value=100.0,
-            value=target_beer['ibu'],
-            step=1.0
-        )
-        
-        srm_min, srm_max = st.slider(
-            "SRM Range",
-            min_value=0.0,
-            max_value=40.0,
-            value=target_beer['srm'],
-            step=0.5
-        )
-        
-        # Convert to range format
+        # Convert point values to ranges
         target_beer_config = {
-            "og": (og_min, og_max),
-            "ibu": (ibu_min, ibu_max),
-            "srm": (srm_min, srm_max)
+            "og": (target_beer['og'] * 0.95, target_beer['og'] * 1.05),
+            "ibu": (max(0, target_beer['ibu'] * 0.9), target_beer['ibu'] * 1.1),
+            "srm": (max(0, target_beer['srm'] * 0.9), target_beer['srm'] * 1.1)
         }
-        fitness_strategy = "range_penalty"
-    elif is_range_format:
-        # Use ranges from beer_styles.csv
-        target_beer_config = target_beer
-        fitness_strategy = "range_penalty"
+    elif fitness_strategy == "distance" and is_range_format:
+        st.warning(
+            "⚠️ Selected 'Distance' but target has ranges. "
+            "Using midpoint of each range as target."
+        )
+        # Convert ranges to point values (midpoints)
+        target_beer_config = {
+            "og": (target_beer['og'][0] + target_beer['og'][1]) / 2,
+            "ibu": (target_beer['ibu'][0] + target_beer['ibu'][1]) / 2,
+            "srm": (target_beer['srm'][0] + target_beer['srm'][1]) / 2
+        }
     else:
-        # Use point values from targets.csv
+        # Data format matches fitness strategy
         target_beer_config = target_beer
-        fitness_strategy = "distance"
+    
+    # Custom ranges option (only for range_penalty strategy)
+    if fitness_strategy == "range_penalty":
+        use_custom_ranges = st.checkbox(
+            "Customize ranges",
+            value=False,
+            help="Adjust the acceptable ranges for this beer style"
+        )
+        
+        if use_custom_ranges:
+            st.write("**Acceptable Ranges:**")
+            
+            # Get current ranges
+            if isinstance(target_beer_config['og'], tuple):
+                og_current = target_beer_config['og']
+            else:
+                og_current = (target_beer_config['og'] * 0.95, target_beer_config['og'] * 1.05)
+            
+            if isinstance(target_beer_config['ibu'], tuple):
+                ibu_current = target_beer_config['ibu']
+            else:
+                ibu_current = (max(0, target_beer_config['ibu'] * 0.9), target_beer_config['ibu'] * 1.1)
+            
+            if isinstance(target_beer_config['srm'], tuple):
+                srm_current = target_beer_config['srm']
+            else:
+                srm_current = (max(0, target_beer_config['srm'] * 0.9), target_beer_config['srm'] * 1.1)
+            
+            og_min, og_max = st.slider(
+                "OG Range",
+                min_value=1.0,
+                max_value=1.15,
+                value=og_current,
+                step=0.005,
+                format="%.3f"
+            )
+            
+            ibu_min, ibu_max = st.slider(
+                "IBU Range",
+                min_value=0.0,
+                max_value=100.0,
+                value=ibu_current,
+                step=1.0
+            )
+            
+            srm_min, srm_max = st.slider(
+                "SRM Range",
+                min_value=0.0,
+                max_value=40.0,
+                value=srm_current,
+                step=0.5
+            )
+            
+            # Override with custom ranges
+            target_beer_config = {
+                "og": (og_min, og_max),
+                "ibu": (ibu_min, ibu_max),
+                "srm": (srm_min, srm_max)
+            }
     
     st.write("---")
     

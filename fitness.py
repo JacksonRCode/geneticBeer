@@ -55,6 +55,11 @@ def fitness_range_penalty(recipe: Recipe, target_range):
     ibu = recipe.calculate_ibu()
     srm = recipe.calculate_srm()
 
+    og_min, og_max = target_range["og"]
+    ibu_min, ibu_max = target_range["ibu"]
+    srm_min, srm_max = target_range["srm"]
+
+
     og_penalty = 0
     if og < og_min:
         og_penalty = ((og_min - og)/OG_STD) ** 2

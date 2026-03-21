@@ -1,0 +1,110 @@
+[
+  {
+    "config_name": "Baseline (50 pop, k=2)",
+    "num_runs": 3,
+    "final_fitness_avg": 7.899602303802941,
+    "final_fitness_std": 4.803666985241231,
+    "final_fitness_best": 1.2412228743721432,
+    "generations_avg": 41.0,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 40.0,
+    "avg_diversity_avg": 0.17399462888772446,
+    "time_avg": 0.43759361902872723
+  },
+  {
+    "config_name": "Large Population (100 pop, k=2)",
+    "num_runs": 3,
+    "final_fitness_avg": 3.424161281102299,
+    "final_fitness_std": 3.650799091437911,
+    "final_fitness_best": 0.40694128001455965,
+    "generations_avg": 39.666666666666664,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 38.666666666666664,
+    "avg_diversity_avg": 0.22437440383379723,
+    "time_avg": 0.9887066682179769
+  },
+  {
+    "config_name": "Small Population (30 pop, k=2)",
+    "num_runs": 3,
+    "final_fitness_avg": 9.755180525833318,
+    "final_fitness_std": 6.192210618411267,
+    "final_fitness_best": 1.3429708067446076,
+    "generations_avg": 35.0,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 34.0,
+    "avg_diversity_avg": 0.18232959023371434,
+    "time_avg": 0.18518797556559244
+  },
+  {
+    "config_name": "High Selection (50 pop, k=5)",
+    "num_runs": 3,
+    "final_fitness_avg": 0.26444907889859404,
+    "final_fitness_std": 0.3725548187799557,
+    "final_fitness_best": 0,
+    "generations_avg": 23.333333333333332,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 22.333333333333332,
+    "avg_diversity_avg": 0.3291055404097099,
+    "time_avg": 0.16061854362487793
+  },
+  {
+    "config_name": "Low Selection (50 pop, k=2)",
+    "num_runs": 3,
+    "final_fitness_avg": 8.17513785312255,
+    "final_fitness_std": 1.4096224963746287,
+    "final_fitness_best": 6.696516324451258,
+    "generations_avg": 46.666666666666664,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 45.666666666666664,
+    "avg_diversity_avg": 0.1750085049487988,
+    "time_avg": 0.558398962020874
+  },
+  {
+    "config_name": "High Variation (50 pop, 1-5 malts/hops)",
+    "num_runs": 3,
+    "final_fitness_avg": 13.093211894118596,
+    "final_fitness_std": 1.2588057100784642,
+    "final_fitness_best": 11.393897853894593,
+    "generations_avg": 74.66666666666667,
+    "convergence_rate": 0.6666666666666666,
+    "convergence_speed_avg": 74.0,
+    "avg_diversity_avg": 0.10909166825977357,
+    "time_avg": 1.1689432462056477
+  },
+  {
+    "config_name": "Low Variation (50 pop, 2-3 malts/hops)",
+    "num_runs": 3,
+    "final_fitness_avg": 11.415784735835482,
+    "final_fitness_std": 1.6043138342094343,
+    "final_fitness_best": 9.17737186697283,
+    "generations_avg": 62.333333333333336,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 61.333333333333336,
+    "avg_diversity_avg": 0.09810243354914316,
+    "time_avg": 0.8218487103780111
+  },
+  {
+    "config_name": "Distance Function (50 pop, k=2)",
+    "num_runs": 3,
+    "final_fitness_avg": 2.4552249609652503,
+    "final_fitness_std": 1.2510851261783535,
+    "final_fitness_best": 0.6986814582800231,
+    "generations_avg": 41.333333333333336,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 40.333333333333336,
+    "avg_diversity_avg": 0.19342478574781152,
+    "time_avg": 0.4737973213195801
+  },
+  {
+    "config_name": "Aggressive Conv. (50 pop, k=5, high conv threshold)",
+    "num_runs": 3,
+    "final_fitness_avg": 0.010530854457998383,
+    "final_fitness_std": 0.00778563329762639,
+    "final_fitness_best": 6.0704184532683195e-05,
+    "generations_avg": 11.666666666666666,
+    "convergence_rate": 1.0,
+    "convergence_speed_avg": 10.666666666666666,
+    "avg_diversity_avg": 0.4313952441519589,
+    "time_avg": 0.08480588595072429
+  }
+]

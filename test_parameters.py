@@ -22,7 +22,7 @@ class ParameterTester:
         self.db = IngredientDatabase()
         self.results = []
     
-    def run_single_experiment(self, config: Dict, num_runs: int = 3) -> Dict:
+    def run_single_experiment(self, config: Dict, num_runs: int = 10) -> Dict:
         """
         Run a single configuration multiple times and average results.
         
@@ -126,7 +126,7 @@ class ParameterTester:
         
         return aggregated
     
-    def run_experiments(self, configurations: List[Dict], num_runs: int = 3):
+    def run_experiments(self, configurations: List[Dict], num_runs: int = 10):
         """
         Run all parameter configurations.
         
@@ -354,6 +354,126 @@ def create_test_configurations(db: IngredientDatabase) -> List[Dict]:
             'max_hops': 3,
             'convergence_generations': 10
         },
+        
+        # Baseline: moderate parameters
+        {
+            'name': 'Baseline (50 pop, k=2)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # Larger population
+        {
+            'name': 'Large Population (100 pop, k=2)',
+            'target_beer': test_beer,
+            'population_size': 100,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # Smaller population (faster)
+        {
+            'name': 'Small Population (30 pop, k=2)',
+            'target_beer': test_beer,
+            'population_size': 30,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # Higher tournament size (more selective)
+        {
+            'name': 'High Selection (50 pop, k=5)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 5,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # Lower tournament size (less selective)
+        {
+            'name': 'Low Selection (50 pop, k=2)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # More variation in ingredients
+        {
+            'name': 'High Variation (50 pop, 1-5 malts/hops)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 1,
+            'max_malts': 5,
+            'min_hops': 1,
+            'max_hops': 5,
+            'convergence_generations': 20
+        },
+        
+        # Less variation in ingredients
+        {
+            'name': 'Low Variation (50 pop, 2-3 malts/hops)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 2,
+            'min_malts': 2,
+            'max_malts': 3,
+            'min_hops': 2,
+            'max_hops': 3,
+            'convergence_generations': 20
+        },
+        
+        # Aggressive convergence
+        {
+            'name': 'Aggressive Conv. (50 pop, k=5, high conv threshold)',
+            'target_beer': test_beer,
+            'population_size': 50,
+            'num_generations': 100,
+            'fitness_strategy': 'distance',
+            'tournament_size': 5,
+            'min_malts': 1,
+            'max_malts': 3,
+            'min_hops': 1,
+            'max_hops': 3,
+            'convergence_generations': 10
+        },
     ]
     
     return configurations
@@ -368,7 +488,7 @@ if __name__ == "__main__":
     
     # Run experiments
     tester = ParameterTester()
-    tester.run_experiments(configs, num_runs=3)
+    tester.run_experiments(configs, num_runs=10)
     
     # Print results
     tester.print_summary()

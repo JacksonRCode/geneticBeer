@@ -50,8 +50,8 @@ def get_adapted_parameters(base_sigma=DEFAULT_MALT_SIGMA,
     
     Follows the 1/5 success rule:
     - σ = σ        if success_rate = 1/5  (no change)
-    - σ = σ / c    if success_rate > 1/5  (decrease: too conservative)
-    - σ = σ × c    if success_rate < 1/5  (increase: too aggressive)
+    - σ = σ / c    if success_rate > 1/5
+    - σ = σ × c    if success_rate < 1/5
     where success_rate is the % of successful mutations and c ∈ [0.8, 1]
     """
     if len(_mutation_history) < _HISTORY_SIZE:
@@ -63,11 +63,11 @@ def get_adapted_parameters(base_sigma=DEFAULT_MALT_SIGMA,
     add_remove_prob = base_add_remove_prob
     
     if success_rate > _SUCCESS_TARGET:
-        # Too many successes (p_s > 1/5) → decrease exploration
+        # Too many successes (p_s > 1/5)
         sigma /= _ADAPTATION_CONSTANT
         add_remove_prob /= _ADAPTATION_CONSTANT
     elif success_rate < _SUCCESS_TARGET:
-        # Too few successes (p_s < 1/5) → increase exploration
+        # Too few successes (p_s < 1/5)
         sigma *= _ADAPTATION_CONSTANT
         add_remove_prob *= _ADAPTATION_CONSTANT
     

@@ -13,7 +13,7 @@ Using Python Dataclasses, we represent a recipe as a complex genotype:
 #### 2. Variation (Recombination and Mutation)
 - Hybrid recombination strategies: A mix of Componenet Swapping, Uniform Crossover, and Arithmetic Blending.
 - Genetic Repair: Automated consolidation of duplicate ingredients and proportional mass scaling to ensure every child is "brewable".
-- Mutation: 
+- Mutation: Various operators for adjusting malt/hop values, and adding/swapping them
 #### 3. Selection and Fitness
 Fitness Calculation Strategy 1: fitness_distance: Fitness based on squared distance to target OG, IBU, SRM.
 Fitness Calculation Strategy 2: fitness_range_penalty: Range-based penalty fitness function.

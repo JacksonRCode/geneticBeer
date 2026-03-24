@@ -38,33 +38,7 @@ Survivor Selection: survivor_selection: (μ, λ) strategy: Select the best μ in
 
 ### Getting Started
 
-#### Prerequisites
-
-- Python 3.10+
-- (Optional) matplotlib (or whatever we end up using) for plotting fitness curves
-- Other
-
----
-
-### Installation
-
-```
-git clone https://github.com/JacksonRCode/geneticBeer.git
-cd geneticBeer
-pip install -r requirements.txt
-```
-
----
-
-### Running the Optimizer (Or my guess as to how we will do it eventually)
-
-```
-python main.py --style "IPA" --generations 100 --population_size 50
-```
-
----
-
-### Results
+Check QUICKSTART.md
 
 ---
 
